@@ -1,3 +1,3 @@
-# MMA_Video_Analysis
+# MMA-Vision
 
 Exploring computer vision approaches to MMA training footage.
