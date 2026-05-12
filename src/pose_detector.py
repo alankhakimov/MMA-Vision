@@ -1,60 +1,50 @@
 """
 pose_detector.py - Pose Detection and Fighter Tracking
-Uses YOLOv8 Pose with ByteTrack for consistent fighter identity across frames
+Uses YOLOv8 Pose for pose estimation without external tracking
 """
- 
+from config import MODEL_NAME, CONFIDENCE_THRESHOLD
 from ultralytics import YOLO
- 
- 
+
+
 class PoseDetector:
     """
-    Detects poses and tracks fighter identity across frames.
-    Uses YOLOv8 Pose + ByteTrack for consistent tracking.
+    Detects poses in frames without external tracking.
+    Fighter identity is handled separately by downstream logic.
     """
     
-    def __init__(self, model_name="yolov8n-pose", confidence=0.5):
-        """
-        Initialize pose detector.
-        
-        Args:
-            model_name: YOLOv8 model variant
-            confidence: Confidence threshold for detections
-        """
-        self.model = YOLO(model_name)
-        self.confidence = confidence
+    def __init__(self):
+        self.model = YOLO(MODEL_NAME)
+        self.confidence = CONFIDENCE_THRESHOLD
     
     def detect(self, frame):
         """
-        Detect poses and track fighters in frame.
+        Detect poses in frame.
         
         Args:
             frame: OpenCV frame (numpy array)
         
         Returns:
-            results object with detections, keypoints, and track IDs
+            results object with detections and keypoints
         """
         results = self.model(
             frame,
             conf=self.confidence,
-            tracker="bytetrack.yaml",
             verbose=False
         )
         
         return results[0]
     
-    def get_tracked_fighters(self, results):
+    def get_fighters(self, results):
         """
-        Extract fighter data with track IDs and keypoints.
+        Extract fighter data with keypoints.
+        Each fighter gets a temporary index ID within this frame.
         """
         fighters = []
         
         if results.boxes is not None and len(results.boxes) > 0:
             for i, box in enumerate(results.boxes):
-                # Use track ID if ByteTrack assigned one, otherwise use index
-                track_id = int(box.id) if box.id is not None else i
-                
                 fighter = {
-                    'track_id': track_id,
+                    'frame_id': i,  # Temporary ID within this frame only
                     'confidence': float(box.conf),
                     'bbox': box.xyxy[0].tolist(),
                     'keypoints': results.keypoints.xy[i].tolist() if results.keypoints else None

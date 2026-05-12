@@ -1,12 +1,13 @@
 from src.load import load_video
 from src.debug_loop import debug_loop
+from config import *
 
 def main():
-    video_path = r"C:\Users\Alank\Documents\GitHub\MMA_Video_Analysis\data\IMG_9264.mov"
-    cap, metadata = load_video(video_path)
-    #print(f"Loaded video: {metadata}")
+    print(f"Running in {'DEBUG' if DEBUG_MODE else 'PRODUCTION'} mode")
+    base_path = VIDEO_INPUT_DIR
+    filename = "IMG_9264.mov"
 
-    #launch debug loop
+    cap, metadata = load_video(f"{base_path}/{filename}")
     debug_loop(cap)
 
  

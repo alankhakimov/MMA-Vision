@@ -48,7 +48,6 @@ def debug_loop(cap):
     paused = True
     frame_idx = 0
     detector = PoseDetector()
-    fighter_registry = {}
     
     while True:
         ret, frame = cap.read()
@@ -56,16 +55,9 @@ def debug_loop(cap):
             print("End of video")
             break
         
-        # Detect poses and track
+        # Detect poses
         results = detector.detect(frame)
-        fighters = detector.get_tracked_fighters(results)
-        
-        # Update registry
-        for fighter in fighters:
-            track_id = fighter['track_id']
-            if track_id not in fighter_registry:
-                fighter_registry[track_id] = {'first_seen': frame_idx}
-            fighter_registry[track_id]['last_seen'] = frame_idx
+        fighters = detector.get_fighters(results)
         
         # Display frame
         display_frame = frame.copy()
@@ -75,7 +67,6 @@ def debug_loop(cap):
         # Draw skeletons for all fighters
         colors = [(0, 255, 0), (255, 0, 0), (0, 0, 255), (255, 255, 0), (255, 0, 255)]
         for i, fighter in enumerate(fighters):
-            track_id = fighter['track_id']
             color = colors[i % len(colors)]
             
             # Draw skeleton
@@ -83,7 +74,7 @@ def debug_loop(cap):
             
             # Draw label
             bbox = fighter['bbox']
-            cv2.putText(display_frame, f"Fighter {track_id}", 
+            cv2.putText(display_frame, f"Fighter {i}", 
                        (int(bbox[0]), int(bbox[1])-10),
                        cv2.FONT_HERSHEY_SIMPLEX, 0.7, color, 2)
         
@@ -110,7 +101,3 @@ def debug_loop(cap):
     
     cap.release()
     cv2.destroyAllWindows()
-    
-    print("\nFighters detected:")
-    for track_id, info in fighter_registry.items():
-        print(f"  Fighter {track_id}: Frames {info['first_seen']}-{info['last_seen']}")
